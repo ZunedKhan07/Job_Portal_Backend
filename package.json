@@ -1,0 +1,11 @@
+{
+  "name": "job_portal_backend",
+  "version": "1.0.0",
+  "description": "This is a Backend for Job Portal Platform.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Juned khan",
+  "license": "ISC"
+}
