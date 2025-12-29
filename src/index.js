@@ -1,5 +1,6 @@
 import dotenv from "dotenv";
 import connectDB from "./db/index.js";
+import app from "./app.js";
 
 
 dotenv.config({
@@ -10,7 +11,7 @@ connectDB()
 // Because db file me async use hua hai
 .then(() => {
     app.listen(process.env.PORT || 4000, () => {
-        console.log(`⚙️ Server is running at port : ${process.env.PORT}`);
+        console.log(`✅ Server is running at port : ${process.env.PORT}`);
     })
 })
 .catch((error) => {
