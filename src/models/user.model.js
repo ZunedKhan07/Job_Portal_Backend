@@ -33,10 +33,12 @@ const userSchema = new Schema({
         required: true
     },
     phone: {
-        type: String
+        type: String,
+        required: true
     },
     location: {
-        type: String
+        type: String,
+        required: true
     },
     role: {
         type: String,
