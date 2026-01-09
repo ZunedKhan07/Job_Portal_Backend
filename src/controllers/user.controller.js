@@ -4,6 +4,18 @@ import asyncHandler from "../utils/asyncHandler.js";
 import { User } from "../models/user.model.js"
 import uploadOnCloudinary from "../utils/cloudinary.js"
 
+const generateAccessandRefreshToken = (async (user_Id) => {
+    const user = await User.findById(user_Id)
+    const accessToken = user.generateAccessToken()
+    const refreshToken = user.generateRefreshToken()
+
+    user.refreshToken = refreshToken  // user me obj save krana
+    await user.save({ validateBeforeSave: false })  // db se save krna
+
+    return {accessToken, refreshToken}
+
+})
+
 const registerUser = asyncHandler( async (req, res) => {
     // get user details from user or frontend
     // validation
@@ -16,7 +28,7 @@ const registerUser = asyncHandler( async (req, res) => {
     // return res
 
 
-    const {fullName, userName, password, email, phone, location} = req.body;
+    const {fullName, userName, password, email, phone, location, role} = req.body;
 
     // if(fullName?.trim() === "" || 
     //    userName?.trim() === "" || 
@@ -35,7 +47,7 @@ const registerUser = asyncHandler( async (req, res) => {
         throw new ApiErrors(404, "All field are required")
     }
 
-    const exitedUser = User.findOne({
+    const exitedUser = await User.findOne({
         $or: [{userName}, {email}]
     })
 
@@ -62,10 +74,11 @@ const registerUser = asyncHandler( async (req, res) => {
         password,
         userName: userName.toLowerCase(),
         phone,
-        location
+        location,
+        role
     })
 
-    const createdUser = await user.findById(user._id).select(
+    const createdUser = await User.findById(user._id).select(
         "-password -refreshToken"
     )
     if(!createdUser){
@@ -77,4 +90,89 @@ const registerUser = asyncHandler( async (req, res) => {
     )
 })
 
-export default registerUser
+const logInUser = asyncHandler( async (req, res) => {
+    // req body se data
+    // username or email
+    // find the user
+    // password checking
+    // generate access and refresh token
+    // send cookie
+
+    const {email, userName, password} = req.body;
+
+    if (!userName || !email) {
+        throw new ApiErrors(401, "usrename or email is required")
+    }
+
+    const user = await User.findOne({
+        $nor: [{email}, {userName}]
+    })
+
+    if (!user) {
+        throw new ApiErrors(404, "user does not exits")  
+    }
+
+    const isPasswordCorrect = user.isPasswordCorrect(password)
+
+    if (!isPasswordCorrect) {
+        throw new ApiErrors(400, "Invalide User Credentials")
+    }
+
+    const {accessToken, refreshToken} = await 
+    generateAccessandRefreshToken(user._id);
+
+    const loggedInUser =  await User.findById(user._id)
+    .select("-password refreshToken")
+
+    const options = {
+        httpOnly: true,  // only server se modified hoganot frontend
+        secure: true
+    }
+
+    return res
+    .status(200)
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken, options)
+    .json(
+        new ApiResponse(
+            200,
+            {
+                user: loggedInUser, accessToken, refreshToken
+            },
+            "User logged In Successfully"
+        )
+    )
+})
+
+const logoutUser = asyncHandler( async (req, res) => {
+    await User.findByIdAndUpdate(
+        req.user._id,
+        {
+            $set: {
+                refreshToken: undefined 
+            }
+        },
+        {
+            new: true
+        }
+    )
+
+    const options = {
+        httpOnly: true,
+        secure: true
+    }
+
+    return res
+    .status(200)
+    .clearCokkie("accessToken", options)
+    .clearCokkie("refreshToken", options)
+    .json(
+        new ApiResponse(201, {}, "User logged Out")
+    )
+})
+
+export default {
+    registerUser,
+    logInUser,
+    logoutUser
+}
