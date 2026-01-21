@@ -16,8 +16,10 @@ app.use(cookieParser())
 
 //Routes
 import userRouter from "./routes/user.route.js";
+import jobRouter from "./routes/job.route.js";
 
 app.use("/api/v1/users", userRouter)
+app.use("/api/v1/jobs", jobRouter)
 
 // http://localhost:PORT/api/v1/users/register
 

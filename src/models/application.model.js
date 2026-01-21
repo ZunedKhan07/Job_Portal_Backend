@@ -1,7 +1,7 @@
 import mongoose, { Schema } from "mongoose";
 
 const applicationSchema = Schema({
-    jonbId: {
+    jobId: {
         type: Schema.Types.ObjectId,
         ref: 'Job',
         required: true
@@ -24,12 +24,12 @@ const applicationSchema = Schema({
     resumeSnapshot: {
         type: String
     },
-    coverLatter: {
+    coverLetter: {
         type: String
     },
 }, { timestamps: true })
 
 //1 to 1 (ek user ek hi job me apply kar sake)
-applicationSchema.index({jonbId: 1, seekerId: 1}, { unique: true })
+applicationSchema.index({jobId: 1, seekerId: 1}, { unique: true })
 
 export const Application = mongoose.model("Application", applicationSchema)

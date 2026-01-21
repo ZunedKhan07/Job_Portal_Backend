@@ -1,5 +1,4 @@
 import mongoose, { Schema } from "mongoose";
-import { User } from "./user.model";
 
 const employeeSchema = new Schema({
     user : {
@@ -42,11 +41,11 @@ const employeeSchema = new Schema({
     contact: {
         type: String
     },
-    job: [
-        {
-            type: Schema.Types.ObjectId,
-            ref: Job
-        }
+    jobsPosted: [
+    {
+        type: Schema.Types.ObjectId,
+        ref: 'Job'
+    }
     ]
 }, 
 {

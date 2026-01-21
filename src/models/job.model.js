@@ -31,25 +31,34 @@ const jobSchema = new Schema({
         required: true
     },
     salary: {
-        min: {type: Number, required: true},
-        max: {type: Number, required: true},
-        currency: {type: String, default: 'INR'},
-        required: true
+        min: {
+            type: Number,
+            required: [true, "Minimum salary is required"]
+        },
+        max: {
+            type: Number,
+            required: [true, "Maximum salary is required"]
+        },
+        currency: {
+            type: String,
+            default: "INR"
+        }
     },
+
     experienceRequired: {
         type: Number,
         default: 0
     },
-    skillsRequired: [{
+    skills: [{
         type: String
     }],
     isFeatured: {
         type: Boolean,
-        default: falsse
+        default: false
     },
     isUrgent: {
         type: Boolean,
-        default: falsse
+        default: false
     },
     isActive: {
         type: Boolean,
@@ -57,7 +66,13 @@ const jobSchema = new Schema({
     },
     closingDate: {
         type: Date
-    }
+    },
+    applications: [
+        {
+            type: Schema.Types.ObjectId,
+            ref: "Application"
+        }
+    ]
 
 }, { timestamps: true })
 
