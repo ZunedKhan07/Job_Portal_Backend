@@ -5,49 +5,59 @@ import { Seeker } from "../models/seeker.model.js";
 import { Application } from "../models/application.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js"
 import { Employee } from "../models/employee.model.js";
+import { uploadOnCloudinary } from "../utils/cloudinary.js"
 
-const applyJob = asyncHandler( async(req, res) => {
+const applyJob = asyncHandler(async (req, res) => {
     const { jobId } = req.params;
-    const {resumeSnapshot, coverLetter} = req.body;
+    const { coverLetter } = req.body;
 
-    const job = await Job.findById(jobId)
+    const job = await Job.findById(jobId);
+    if (!job) throw new ApiErrors(404, "Job does not exist");
 
-    if (!job) {
-        throw new ApiErrors(404, "Job does not Exits")
-    }
-
-    const seekerProfile = await Seeker.findOne({ userId : req.user._id })
-
-    if (!seekerProfile) {
-        throw new ApiErrors(404, "Seeker profile not found. Please complete your profile first.")
-    }
+    const seekerProfile = await Seeker.findOne({ userId: req.user._id });
+    if (!seekerProfile) throw new ApiErrors(404, "Seeker profile not found.");
 
     const alreadyApplied = await Application.findOne({
         jobId,
-        seekerId : seekerProfile._id
-    })
+        seekerId: seekerProfile._id
+    });
+    if (alreadyApplied) throw new ApiErrors(400, "You have already applied!");
+    
+    let resumeUrl = seekerProfile.resume;
 
-    if (alreadyApplied) {
-        throw new ApiErrors(400, "You have already applied for this job");
+    const resumeLocalPath = req.file?.path; 
+
+    if (resumeLocalPath) {
+        const uploadedResume = await uploadOnCloudinary(resumeLocalPath);
+        if (uploadedResume) {
+            resumeUrl = uploadedResume.url; // अगर नई फाइल अपलोड हुई, तो URL बदल दो
+        }
     }
 
+    if (!resumeUrl) {
+        throw new ApiErrors(400, "Please upload a resume or add one to your profile.");
+    }
+
+    // --- 🚀 CLOUDINARY LOGIC END ---
+
+    // 3. एप्लीकेशन क्रिएट करें
     const application = await Application.create({
         jobId,
         seekerId: seekerProfile._id,
         employerId: job.employerId,
         coverLetter,
-        resumeSnapshot: resumeSnapshot || seekerProfile.resume
+        resumeSnapshot: resumeUrl // यहाँ अब Cloudinary का URL या पुराना URL जाएगा
     });
 
+    // 4. जॉब मॉडल अपडेट
     await Job.findByIdAndUpdate(jobId, {
-        $push: { applications: application._id}
-    })
+        $push: { applications: application._id }
+    });
 
     return res.status(201).json(
         new ApiResponse(201, application, "Applied successfully!")
     );
-})
-
+});
 const getMyApplications = asyncHandler( async(req, res) => {
     const seeker = await Seeker.findOne({ userId : req.user._id})
 
