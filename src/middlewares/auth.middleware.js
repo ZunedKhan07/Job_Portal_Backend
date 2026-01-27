@@ -5,7 +5,7 @@ import ApiError from "../utils/ApiErrors.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import jwt from "jsonwebtoken"
 
-const varifyJWT = asyncHandler( async(req, res, next) => {
+const varifyJWT = asyncHandler( async(req, _, next) => {
     try {
         const token = req.cookie?.accessToken || req
         .header("Authorization")?.replace("Bearer ", "")
@@ -29,14 +29,22 @@ const varifyJWT = asyncHandler( async(req, res, next) => {
     }
 })
 
-const isEmployee = asyncHandler( async(req, res, next) => {
+const isEmployee = asyncHandler( async(req, _, next) => {
     if (req.user?.role !== 'employer') {
         throw new ApiError(403, "Only Employers can post jobs!")
     }
     next();
 })
 
+const isSeeker = asyncHandler( async(req, _, next) => {
+    if (req.user?.role !== 'seeker') {
+        throw new ApiError(403, "Only Seeker can apply jobs!")
+    }
+    next();
+})
+
 export {
     varifyJWT,
-    isEmployee
+    isEmployee,
+    isSeeker
  }
